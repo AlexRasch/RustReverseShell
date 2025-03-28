@@ -1,0 +1,6 @@
+# Sätt som x86
+[build]
+target = "x86_64-pc-windows-gnu"
+
+[target.x86_64-pc-windows-gnu]
+rustflags = ["-C", "link-arg=-s", "-C", "target-feature=+crt-static"]
