@@ -1,6 +1,8 @@
 use std::io::{self, Read, Write};
 use std::net::{TcpListener, TcpStream};
 
+use ReverseShell::settings::{IP_ADDRESS, PORT};
+
 fn handle_connection(mut stream: TcpStream) -> io::Result<()> {
     println!("Hanterar anslutning från: {}", stream.peer_addr()?);
     let mut buffer = [0; 1024];
@@ -22,8 +24,9 @@ fn handle_connection(mut stream: TcpStream) -> io::Result<()> {
 }
 
 fn main() -> io::Result<()> {
-    let listener = TcpListener::bind("127.0.0.1:4444")?;
-    println!("Lyssnar på 127.0.0.1:4444...");
+    let address = format!("{}:{}", IP_ADDRESS, PORT);
+    let listener = TcpListener::bind(&address)?;
+    println!("Lyssnar på {}", address);
 
     // Lägg till debug för att se om vi ens går in i loopen
     for stream in listener.incoming() {

